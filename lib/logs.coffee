@@ -1,0 +1,111 @@
+###
+The MIT License
+
+Copyright (c) 2015 Resin.io, Inc. https://resin.io.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+###
+
+###*
+# @module logs
+###
+
+_ = require('lodash')
+Promise = require('bluebird')
+EventEmitter = require('events').EventEmitter
+pubnub = require('./pubnub')
+utils = require('./utils')
+
+###*
+# @summary Subscribe to device logs
+# @function
+# @public
+#
+# @description This function emits various events:
+#
+# - `line`: When a log line arrives, passing a string as an argument.
+# - `error`: When an error occurs, passing an error instance as an argument.
+#
+# The object returned by this function also contains the following functions:
+#
+# - `.unsubscribe()`: Unsubscribe from the device channel.
+#
+# @param {Object} pubnubKeys - PubNub keys
+# @param {String} pubnubKeys.subscribe_key - subscribe key
+# @param {String} pubnubKeys.publish_key - publish key
+# @param {String} uuid - uuid
+#
+# @returns {EventEmitter} logs
+#
+# @example
+# deviceLogs = logs.subscribe
+# 	subscribe_key: '...'
+# 	publish_key: '...'
+# , '...'
+#
+# deviceLogs.on 'line', (line) ->
+#		console.log(line)
+#
+# deviceLogs.on 'error', (error) ->
+#		throw error
+###
+exports.subscribe = (pubnubKeys, uuid) ->
+	channel = utils.getChannel(uuid)
+	instance = pubnub.getInstance(pubnubKeys)
+	emitter = new EventEmitter()
+
+	instance.subscribe
+		channel: utils.getChannel(uuid)
+		restore: true
+		message: (message) ->
+			emitter.emit('line', message)
+		error: (error) ->
+			emitter.emit('error', error)
+
+	emitter.unsubscribe = ->
+		instance.unsubscribe({ channel })
+
+	return emitter
+
+###*
+# @summary Get device logs history
+# @function
+# @public
+#
+# @param {Object} pubnubKeys - PubNub keys
+# @param {String} pubnubKeys.subscribe_key - subscribe key
+# @param {String} pubnubKeys.publish_key - publish key
+# @param {String} uuid - uuid
+#
+# @returns {Promise<String[]>} device logs history
+#
+# @example
+# logs.history
+# 	subscribe_key: '...'
+# 	publish_key: '...'
+# , '...'
+# .then (messages) ->
+# 	for message in messages
+# 		console.log(message)
+###
+exports.history = (pubnubKeys, uuid) ->
+	Promise.try ->
+		instance = pubnub.getInstance(pubnubKeys)
+		channel = utils.getChannel(uuid)
+		return pubnub.history(instance, channel)
