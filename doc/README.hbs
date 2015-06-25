@@ -13,6 +13,10 @@ Role
 
 The intention of this module is to provide low level access to Resin.io device logs.
 
+**THIS MODULE IS LOW LEVEL AND IS NOT MEANT TO BE USED BY END USERS DIRECTLY**.
+
+Unless you know what you're doing, use the [Resin SDK](https://github.com/resin-io/resin-sdk) instead.
+
 Installation
 ------------
 
