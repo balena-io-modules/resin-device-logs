@@ -71,7 +71,7 @@ exports.subscribe = (pubnubKeys, uuid) ->
 	emitter = new EventEmitter()
 
 	instance.subscribe
-		channel: utils.getChannel(uuid)
+		channel: channel
 		restore: true
 		message: (message) ->
 			emitter.emit('line', message)
