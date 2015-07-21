@@ -79,7 +79,7 @@ exports.subscribe = function(pubnubKeys, uuid) {
   instance = pubnub.getInstance(pubnubKeys);
   emitter = new EventEmitter();
   instance.subscribe({
-    channel: utils.getChannel(uuid),
+    channel: channel,
     restore: true,
     message: function(message) {
       return emitter.emit('line', message);
