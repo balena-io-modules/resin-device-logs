@@ -31,11 +31,11 @@ Documentation
 
 
 * [logs](#module_logs)
-  * [.subscribe(pubnubKeys, uuid)](#module_logs.subscribe) ⇒ <code>EventEmitter</code>
-  * [.history(pubnubKeys, uuid)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
+  * [.subscribe(pubnubKeys, device)](#module_logs.subscribe) ⇒ <code>EventEmitter</code>
+  * [.history(pubnubKeys, device)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
 
 <a name="module_logs.subscribe"></a>
-### logs.subscribe(pubnubKeys, uuid) ⇒ <code>EventEmitter</code>
+### logs.subscribe(pubnubKeys, device) ⇒ <code>EventEmitter</code>
 This function emits various events:
 
 - `line`: When a log line arrives, passing a string as an argument.
@@ -55,14 +55,15 @@ The object returned by this function also contains the following functions:
 | pubnubKeys | <code>Object</code> | PubNub keys |
 | pubnubKeys.subscribe_key | <code>String</code> | subscribe key |
 | pubnubKeys.publish_key | <code>String</code> | publish key |
-| uuid | <code>String</code> | uuid |
+| device | <code>Object</code> | device |
 
 **Example**  
 ```js
 deviceLogs = logs.subscribe
 	subscribe_key: '...'
 	publish_key: '...'
-, '...'
+,
+		uuid: '...'
 
 deviceLogs.on 'line', (line) ->
 		console.log(line)
@@ -71,7 +72,7 @@ deviceLogs.on 'error', (error) ->
 		throw error
 ```
 <a name="module_logs.history"></a>
-### logs.history(pubnubKeys, uuid) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
+### logs.history(pubnubKeys, device) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
 **Kind**: static method of <code>[logs](#module_logs)</code>  
 **Summary**: Get device logs history  
 **Returns**: <code>Promise.&lt;Array.&lt;String&gt;&gt;</code> - device logs history  
@@ -82,14 +83,15 @@ deviceLogs.on 'error', (error) ->
 | pubnubKeys | <code>Object</code> | PubNub keys |
 | pubnubKeys.subscribe_key | <code>String</code> | subscribe key |
 | pubnubKeys.publish_key | <code>String</code> | publish key |
-| uuid | <code>String</code> | uuid |
+| device | <code>Object</code> | device |
 
 **Example**  
 ```js
 logs.history
 	subscribe_key: '...'
 	publish_key: '...'
-, '...'
+,
+		uuid: '...'
 .then (messages) ->
 	for message in messages
 		console.log(message)

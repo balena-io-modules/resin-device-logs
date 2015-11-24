@@ -56,7 +56,7 @@ utils = require('./utils');
  * @param {Object} pubnubKeys - PubNub keys
  * @param {String} pubnubKeys.subscribe_key - subscribe key
  * @param {String} pubnubKeys.publish_key - publish key
- * @param {String} uuid - uuid
+ * @param {Object} device - device
  *
  * @returns {EventEmitter} logs
  *
@@ -64,7 +64,8 @@ utils = require('./utils');
  * deviceLogs = logs.subscribe
  * 	subscribe_key: '...'
  * 	publish_key: '...'
- * , '...'
+ * ,
+ *		uuid: '...'
  *
  * deviceLogs.on 'line', (line) ->
  *		console.log(line)
@@ -73,9 +74,9 @@ utils = require('./utils');
  *		throw error
  */
 
-exports.subscribe = function(pubnubKeys, uuid) {
+exports.subscribe = function(pubnubKeys, device) {
   var channel, emitter, instance;
-  channel = utils.getChannel(uuid);
+  channel = utils.getChannel(device);
   instance = pubnub.getInstance(pubnubKeys);
   emitter = new EventEmitter();
   instance.subscribe({
@@ -105,7 +106,7 @@ exports.subscribe = function(pubnubKeys, uuid) {
  * @param {Object} pubnubKeys - PubNub keys
  * @param {String} pubnubKeys.subscribe_key - subscribe key
  * @param {String} pubnubKeys.publish_key - publish key
- * @param {String} uuid - uuid
+ * @param {Object} device - device
  *
  * @returns {Promise<String[]>} device logs history
  *
@@ -113,17 +114,18 @@ exports.subscribe = function(pubnubKeys, uuid) {
  * logs.history
  * 	subscribe_key: '...'
  * 	publish_key: '...'
- * , '...'
+ * ,
+ *		uuid: '...'
  * .then (messages) ->
  * 	for message in messages
  * 		console.log(message)
  */
 
-exports.history = function(pubnubKeys, uuid) {
+exports.history = function(pubnubKeys, device) {
   return Promise["try"](function() {
     var channel, instance;
     instance = pubnub.getInstance(pubnubKeys);
-    channel = utils.getChannel(uuid);
+    channel = utils.getChannel(device);
     return pubnub.history(instance, channel);
   });
 };
