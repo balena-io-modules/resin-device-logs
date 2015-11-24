@@ -27,11 +27,11 @@ THE SOFTWARE.
 # @function
 # @protected
 #
-# @param {String} uuid - device uuid
+# @param {Object} device - device
 # @returns {String} logs channel
 #
 # @example
 # channel = utils.getChannel('...')
 ###
-exports.getChannel = (uuid) ->
-	return "device-#{uuid}-logs"
+exports.getChannel = (device) ->
+	return device.logs_channel or "device-#{device.uuid}-logs"

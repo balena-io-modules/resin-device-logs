@@ -32,7 +32,7 @@ describe 'Logs:', ->
 				@pubnubGetInstanceStub.restore()
 
 			it 'should send message events', (done) ->
-				pubnubStream = logs.subscribe(pubnubKeys, 'asdf')
+				pubnubStream = logs.subscribe(pubnubKeys, uuid: 'asdf')
 				lines = []
 				pubnubStream.on 'line', (line) ->
 					lines.push(line)
@@ -55,7 +55,7 @@ describe 'Logs:', ->
 				@pubnubGetInstanceStub.restore()
 
 			it 'should receive the error', (done) ->
-				pubnubStream = logs.subscribe(pubnubKeys, 'asdf')
+				pubnubStream = logs.subscribe(pubnubKeys, uuid: 'asdf')
 				pubnubStream.on 'error', (error) ->
 					m.chai.expect(error).to.be.an.instanceof(Error)
 					m.chai.expect(error.message).to.equal('pubnub error')
@@ -73,7 +73,7 @@ describe 'Logs:', ->
 				@pubnubGetInstanceStub.restore()
 
 			it 'should reject with that error', ->
-				promise = logs.history(pubnubKeys, 'asdf')
+				promise = logs.history(pubnubKeys, uuid: 'asdf')
 				m.chai.expect(promise).to.be.rejectedWith('pubnub error')
 
 		describe 'given an instance that reacts to a valid channel', ->
@@ -101,7 +101,7 @@ describe 'Logs:', ->
 			describe 'given the correct uuid', ->
 
 				it 'should eventually return the messages', ->
-					promise = logs.history(pubnubKeys, 'asdf')
+					promise = logs.history(pubnubKeys, uuid: 'asdf')
 					m.chai.expect(promise).to.eventually.become([ 'Foo', 'Bar', 'Baz' ])
 
 		describe 'given an instance that returns an error', ->
@@ -118,5 +118,5 @@ describe 'Logs:', ->
 				@pubnubGetInstanceStub.restore()
 
 			it 'should reject with the error', ->
-				promise = logs.history(pubnubKeys, 'asdf')
+				promise = logs.history(pubnubKeys, uuid: 'asdf')
 				m.chai.expect(promise).to.be.rejectedWith('logs error')
