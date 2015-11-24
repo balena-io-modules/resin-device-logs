@@ -34,4 +34,4 @@ THE SOFTWARE.
 # channel = utils.getChannel('...')
 ###
 exports.getChannel = (device) ->
-	return device.logs_channel or "device-#{device.uuid}-logs"
+	return "device-#{device.logs_channel or device.uuid}-logs"

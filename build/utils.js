@@ -35,5 +35,5 @@ THE SOFTWARE.
  * channel = utils.getChannel('...')
  */
 exports.getChannel = function(device) {
-  return device.logs_channel || ("device-" + device.uuid + "-logs");
+  return "device-" + (device.logs_channel || device.uuid) + "-logs";
 };
