@@ -11,7 +11,7 @@ describe 'Utils:', ->
 				device =
 					uuid: 'asdf'
 					logs_channel: 'qwer'
-				m.chai.expect(utils.getChannel(device)).to.equal('qwer')
+				m.chai.expect(utils.getChannel(device)).to.equal('device-qwer-logs')
 
 		describe 'given no logs_channel property', ->
 
