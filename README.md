@@ -6,6 +6,8 @@ resin-device-logs
 [![Build Status](https://travis-ci.org/resin-io/resin-device-logs.svg?branch=master)](https://travis-ci.org/resin-io/resin-device-logs)
 [![Build status](https://ci.appveyor.com/api/projects/status/vxkytm4f0t1tuj4f?svg=true)](https://ci.appveyor.com/project/jviotti/resin-device-logs)
 
+Join our online chat at [![Gitter chat](https://badges.gitter.im/resin-io/chat.png)](https://gitter.im/resin-io/chat)
+
 Resin.io device logs utilities.
 
 Role
