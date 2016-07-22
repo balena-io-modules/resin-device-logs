@@ -50,13 +50,13 @@ utils = require('./utils')
 # 	subscribe_key: '...'
 # 	publish_key: '...'
 # ,
-#		uuid: '...'
+# 	uuid: '...'
 #
 # deviceLogs.on 'line', (line) ->
-#		console.log(line)
+# 	console.log(line)
 #
 # deviceLogs.on 'error', (error) ->
-#		throw error
+# 	throw error
 ###
 exports.subscribe = (pubnubKeys, device) ->
 	channel = utils.getChannel(device)
@@ -66,8 +66,9 @@ exports.subscribe = (pubnubKeys, device) ->
 	instance.subscribe
 		channel: channel
 		restore: true
-		message: (message) ->
-			emitter.emit('line', message)
+		message: (payload) ->
+			_.each utils.extractMessages(payload), (data) ->
+				emitter.emit('line', data.message)
 		error: (error) ->
 			emitter.emit('error', error)
 
@@ -93,7 +94,7 @@ exports.subscribe = (pubnubKeys, device) ->
 # 	subscribe_key: '...'
 # 	publish_key: '...'
 # ,
-#		uuid: '...'
+# 	uuid: '...'
 # .then (messages) ->
 # 	for message in messages
 # 		console.log(message)
@@ -103,3 +104,6 @@ exports.history = (pubnubKeys, device) ->
 		instance = pubnub.getInstance(pubnubKeys)
 		channel = utils.getChannel(device)
 		return pubnub.history(instance, channel)
+	.map (line) ->
+		return _.map(utils.extractMessages(line), 'message')
+	.then(_.flatten)

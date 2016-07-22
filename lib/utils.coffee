@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ###
 
+_ = require('lodash')
+
 ###*
 # @summary Get logs channel name from a uuid
 # @function
@@ -27,3 +29,38 @@ limitations under the License.
 ###
 exports.getChannel = (device) ->
 	return "device-#{device.logs_channel or device.uuid}-logs"
+
+###*
+# @summary Extract messages from PubNub payload
+# @function
+# @public
+#
+# @param {*} message - message
+# @returns {Object[]} log messages
+#
+# @example
+# messages = utils.extractMessages('foo bar')
+###
+exports.extractMessages = (message) ->
+
+	# Coming from ancient supervisor
+	if _.isString(message)
+		return [
+			isSystem: /\[system\]/.test(message)
+			message: message
+			timestamp: null
+		]
+
+	# Modern supervisor
+	# An array of objects with munged keys
+	else if _.isArray(message)
+		return _.map message, ({ m, t, s }) ->
+			message: m
+			timestamp: t
+
+			# Make sure it's bool (can be `1`)
+			isSystem: Boolean(s)
+
+	# Legacy supervisor
+	else
+		return [ message ]

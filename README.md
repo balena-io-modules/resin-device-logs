@@ -33,10 +33,11 @@ Documentation
 
 
 * [logs](#module_logs)
-  * [.subscribe(pubnubKeys, device)](#module_logs.subscribe) ⇒ <code>EventEmitter</code>
-  * [.history(pubnubKeys, device)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
+    * [.subscribe(pubnubKeys, device)](#module_logs.subscribe) ⇒ <code>EventEmitter</code>
+    * [.history(pubnubKeys, device)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
 
 <a name="module_logs.subscribe"></a>
+
 ### logs.subscribe(pubnubKeys, device) ⇒ <code>EventEmitter</code>
 This function emits various events:
 
@@ -65,15 +66,16 @@ deviceLogs = logs.subscribe
 	subscribe_key: '...'
 	publish_key: '...'
 ,
-		uuid: '...'
+	uuid: '...'
 
 deviceLogs.on 'line', (line) ->
-		console.log(line)
+	console.log(line)
 
 deviceLogs.on 'error', (error) ->
-		throw error
+	throw error
 ```
 <a name="module_logs.history"></a>
+
 ### logs.history(pubnubKeys, device) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
 **Kind**: static method of <code>[logs](#module_logs)</code>  
 **Summary**: Get device logs history  
@@ -93,7 +95,7 @@ logs.history
 	subscribe_key: '...'
 	publish_key: '...'
 ,
-		uuid: '...'
+	uuid: '...'
 .then (messages) ->
 	for message in messages
 		console.log(message)

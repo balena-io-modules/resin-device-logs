@@ -14,6 +14,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
+var _;
+
+_ = require('lodash');
+
 
 /**
  * @summary Get logs channel name from a uuid
@@ -26,6 +30,44 @@ limitations under the License.
  * @example
  * channel = utils.getChannel('...')
  */
+
 exports.getChannel = function(device) {
   return "device-" + (device.logs_channel || device.uuid) + "-logs";
+};
+
+
+/**
+ * @summary Extract messages from PubNub payload
+ * @function
+ * @public
+ *
+ * @param {*} message - message
+ * @returns {Object[]} log messages
+ *
+ * @example
+ * messages = utils.extractMessages('foo bar')
+ */
+
+exports.extractMessages = function(message) {
+  if (_.isString(message)) {
+    return [
+      {
+        isSystem: /\[system\]/.test(message),
+        message: message,
+        timestamp: null
+      }
+    ];
+  } else if (_.isArray(message)) {
+    return _.map(message, function(_arg) {
+      var m, s, t;
+      m = _arg.m, t = _arg.t, s = _arg.s;
+      return {
+        message: m,
+        timestamp: t,
+        isSystem: Boolean(s)
+      };
+    });
+  } else {
+    return [message];
+  }
 };
