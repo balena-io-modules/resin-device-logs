@@ -57,13 +57,13 @@ utils = require('./utils');
  * 	subscribe_key: '...'
  * 	publish_key: '...'
  * ,
- *		uuid: '...'
+ * 	uuid: '...'
  *
  * deviceLogs.on 'line', (line) ->
- *		console.log(line)
+ * 	console.log(line)
  *
  * deviceLogs.on 'error', (error) ->
- *		throw error
+ * 	throw error
  */
 
 exports.subscribe = function(pubnubKeys, device) {
@@ -74,8 +74,10 @@ exports.subscribe = function(pubnubKeys, device) {
   instance.subscribe({
     channel: channel,
     restore: true,
-    message: function(message) {
-      return emitter.emit('line', message);
+    message: function(payload) {
+      return _.each(utils.extractMessages(payload), function(data) {
+        return emitter.emit('line', data.message);
+      });
     },
     error: function(error) {
       return emitter.emit('error', error);
@@ -107,7 +109,7 @@ exports.subscribe = function(pubnubKeys, device) {
  * 	subscribe_key: '...'
  * 	publish_key: '...'
  * ,
- *		uuid: '...'
+ * 	uuid: '...'
  * .then (messages) ->
  * 	for message in messages
  * 		console.log(message)
@@ -119,5 +121,7 @@ exports.history = function(pubnubKeys, device) {
     instance = pubnub.getInstance(pubnubKeys);
     channel = utils.getChannel(device);
     return pubnub.history(instance, channel);
-  });
+  }).map(function(line) {
+    return _.map(utils.extractMessages(line), 'message');
+  }).then(_.flatten);
 };
