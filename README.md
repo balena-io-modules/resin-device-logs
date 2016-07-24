@@ -34,14 +34,14 @@ Documentation
 
 * [logs](#module_logs)
     * [.subscribe(pubnubKeys, device)](#module_logs.subscribe) ⇒ <code>EventEmitter</code>
-    * [.history(pubnubKeys, device)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
+    * [.history(pubnubKeys, device)](#module_logs.history) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
 
 <a name="module_logs.subscribe"></a>
 
 ### logs.subscribe(pubnubKeys, device) ⇒ <code>EventEmitter</code>
 This function emits various events:
 
-- `line`: When a log line arrives, passing a string as an argument.
+- `line`: When a log line arrives, passing an object as an argument.
 - `error`: When an error occurs, passing an error instance as an argument.
 
 The object returned by this function also contains the following functions:
@@ -69,17 +69,19 @@ deviceLogs = logs.subscribe
 	uuid: '...'
 
 deviceLogs.on 'line', (line) ->
-	console.log(line)
+	console.log(line.message)
+	console.log(line.isSystem)
+	console.log(line.timestamp)
 
 deviceLogs.on 'error', (error) ->
 	throw error
 ```
 <a name="module_logs.history"></a>
 
-### logs.history(pubnubKeys, device) ⇒ <code>Promise.&lt;Array.&lt;String&gt;&gt;</code>
+### logs.history(pubnubKeys, device) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
 **Kind**: static method of <code>[logs](#module_logs)</code>  
 **Summary**: Get device logs history  
-**Returns**: <code>Promise.&lt;Array.&lt;String&gt;&gt;</code> - device logs history  
+**Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - device logs history  
 **Access:** public  
 
 | Param | Type | Description |
@@ -96,9 +98,11 @@ logs.history
 	publish_key: '...'
 ,
 	uuid: '...'
-.then (messages) ->
-	for message in messages
-		console.log(message)
+.then (lines) ->
+	for line in lines
+		console.log(line.message)
+		console.log(line.isSystem)
+		console.log(line.timestamp)
 ```
 
 Support

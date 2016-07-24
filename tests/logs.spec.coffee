@@ -38,7 +38,23 @@ describe 'Logs:', ->
 					lines.push(line)
 
 					if lines.length is 3
-						m.chai.expect(lines).to.deep.equal([ 'foo', 'bar', 'baz' ])
+						m.chai.expect(lines).to.deep.equal [
+							{
+								message: 'foo'
+								isSystem: false
+								timestamp: null
+							}
+							{
+								message: 'bar'
+								isSystem: false
+								timestamp: null
+							}
+							{
+								message: 'baz'
+								isSystem: false
+								timestamp: null
+							}
+						]
 						done()
 
 		describe 'given an instance that connects and sends an error', ->
@@ -102,7 +118,23 @@ describe 'Logs:', ->
 
 				it 'should eventually return the messages', ->
 					promise = logs.history(pubnubKeys, uuid: 'asdf')
-					m.chai.expect(promise).to.eventually.become([ 'Foo', 'Bar', 'Baz' ])
+					m.chai.expect(promise).to.eventually.become [
+						{
+							message: 'Foo'
+							isSystem: false
+							timestamp: null
+						}
+						{
+							message: 'Bar'
+							isSystem: false
+							timestamp: null
+						}
+						{
+							message: 'Baz'
+							isSystem: false
+							timestamp: null
+						}
+					]
 
 		describe 'given an instance that returns an error', ->
 

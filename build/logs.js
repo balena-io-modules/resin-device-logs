@@ -38,7 +38,7 @@ utils = require('./utils');
  *
  * @description This function emits various events:
  *
- * - `line`: When a log line arrives, passing a string as an argument.
+ * - `line`: When a log line arrives, passing an object as an argument.
  * - `error`: When an error occurs, passing an error instance as an argument.
  *
  * The object returned by this function also contains the following functions:
@@ -60,7 +60,9 @@ utils = require('./utils');
  * 	uuid: '...'
  *
  * deviceLogs.on 'line', (line) ->
- * 	console.log(line)
+ * 	console.log(line.message)
+ * 	console.log(line.isSystem)
+ * 	console.log(line.timestamp)
  *
  * deviceLogs.on 'error', (error) ->
  * 	throw error
@@ -76,7 +78,7 @@ exports.subscribe = function(pubnubKeys, device) {
     restore: true,
     message: function(payload) {
       return _.each(utils.extractMessages(payload), function(data) {
-        return emitter.emit('line', data.message);
+        return emitter.emit('line', data);
       });
     },
     error: function(error) {
@@ -102,7 +104,7 @@ exports.subscribe = function(pubnubKeys, device) {
  * @param {String} pubnubKeys.publish_key - publish key
  * @param {Object} device - device
  *
- * @returns {Promise<String[]>} device logs history
+ * @returns {Promise<Object[]>} device logs history
  *
  * @example
  * logs.history
@@ -110,9 +112,11 @@ exports.subscribe = function(pubnubKeys, device) {
  * 	publish_key: '...'
  * ,
  * 	uuid: '...'
- * .then (messages) ->
- * 	for message in messages
- * 		console.log(message)
+ * .then (lines) ->
+ * 	for line in lines
+ * 		console.log(line.message)
+ * 		console.log(line.isSystem)
+ * 		console.log(line.timestamp)
  */
 
 exports.history = function(pubnubKeys, device) {
@@ -121,7 +125,5 @@ exports.history = function(pubnubKeys, device) {
     instance = pubnub.getInstance(pubnubKeys);
     channel = utils.getChannel(device);
     return pubnub.history(instance, channel);
-  }).map(function(line) {
-    return _.map(utils.extractMessages(line), 'message');
-  }).then(_.flatten);
+  }).map(utils.extractMessages).then(_.flatten);
 };
