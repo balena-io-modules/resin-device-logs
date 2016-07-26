@@ -31,7 +31,7 @@ utils = require('./utils')
 #
 # @description This function emits various events:
 #
-# - `line`: When a log line arrives, passing a string as an argument.
+# - `line`: When a log line arrives, passing an object as an argument.
 # - `error`: When an error occurs, passing an error instance as an argument.
 #
 # The object returned by this function also contains the following functions:
@@ -53,7 +53,9 @@ utils = require('./utils')
 # 	uuid: '...'
 #
 # deviceLogs.on 'line', (line) ->
-# 	console.log(line)
+# 	console.log(line.message)
+# 	console.log(line.isSystem)
+# 	console.log(line.timestamp)
 #
 # deviceLogs.on 'error', (error) ->
 # 	throw error
@@ -68,7 +70,7 @@ exports.subscribe = (pubnubKeys, device) ->
 		restore: true
 		message: (payload) ->
 			_.each utils.extractMessages(payload), (data) ->
-				emitter.emit('line', data.message)
+				emitter.emit('line', data)
 		error: (error) ->
 			emitter.emit('error', error)
 
@@ -87,7 +89,7 @@ exports.subscribe = (pubnubKeys, device) ->
 # @param {String} pubnubKeys.publish_key - publish key
 # @param {Object} device - device
 #
-# @returns {Promise<String[]>} device logs history
+# @returns {Promise<Object[]>} device logs history
 #
 # @example
 # logs.history
@@ -95,15 +97,16 @@ exports.subscribe = (pubnubKeys, device) ->
 # 	publish_key: '...'
 # ,
 # 	uuid: '...'
-# .then (messages) ->
-# 	for message in messages
-# 		console.log(message)
+# .then (lines) ->
+# 	for line in lines
+# 		console.log(line.message)
+# 		console.log(line.isSystem)
+# 		console.log(line.timestamp)
 ###
 exports.history = (pubnubKeys, device) ->
 	Promise.try ->
 		instance = pubnub.getInstance(pubnubKeys)
 		channel = utils.getChannel(device)
 		return pubnub.history(instance, channel)
-	.map (line) ->
-		return _.map(utils.extractMessages(line), 'message')
+	.map(utils.extractMessages)
 	.then(_.flatten)
