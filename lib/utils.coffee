@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ###
 
-_ = require('lodash')
+isString = require('lodash/isString')
+isArray = require('lodash/isArray')
 
 ###*
 # @summary Get logs channel name from a uuid
@@ -44,7 +45,7 @@ exports.getChannel = (device) ->
 exports.extractMessages = (message) ->
 
 	# Coming from ancient supervisor
-	if _.isString(message)
+	if isString(message)
 		return [
 			isSystem: /\[system\]/.test(message)
 			message: message
@@ -53,8 +54,8 @@ exports.extractMessages = (message) ->
 
 	# Modern supervisor
 	# An array of objects with munged keys
-	else if _.isArray(message)
-		return _.map message, ({ m, t, s }) ->
+	else if isArray(message)
+		return message.map ({ m, t, s }) ->
 			message: m
 			timestamp: t
 

@@ -14,9 +14,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-var Promise, PubNub, _;
-
-_ = require('lodash');
+var Promise, PubNub;
 
 Promise = require('bluebird');
 
@@ -57,11 +55,11 @@ exports.getInstance = function(options) {
  */
 
 exports.history = function(instance, channel) {
-  return Promise.fromNode(function(callback) {
+  return Promise.fromCallback(function(callback) {
     return instance.history({
       channel: channel,
       callback: function(history) {
-        return callback(null, _.first(history));
+        return callback(null, history[0]);
       },
       error: callback
     });

@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+### Changed
+
+- Update dependencies and use granular lodash imports
+
 ## [3.0.0] - 2015-07-26
 
 ### Changed

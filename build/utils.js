@@ -14,9 +14,11 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-var _;
+var isArray, isString;
 
-_ = require('lodash');
+isString = require('lodash/isString');
+
+isArray = require('lodash/isArray');
 
 
 /**
@@ -49,7 +51,7 @@ exports.getChannel = function(device) {
  */
 
 exports.extractMessages = function(message) {
-  if (_.isString(message)) {
+  if (isString(message)) {
     return [
       {
         isSystem: /\[system\]/.test(message),
@@ -57,10 +59,10 @@ exports.extractMessages = function(message) {
         timestamp: null
       }
     ];
-  } else if (_.isArray(message)) {
-    return _.map(message, function(_arg) {
+  } else if (isArray(message)) {
+    return message.map(function(arg) {
       var m, s, t;
-      m = _arg.m, t = _arg.t, s = _arg.s;
+      m = arg.m, t = arg.t, s = arg.s;
       return {
         message: m,
         timestamp: t,
