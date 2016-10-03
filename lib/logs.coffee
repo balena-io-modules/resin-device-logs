@@ -18,7 +18,7 @@ limitations under the License.
 # @module logs
 ###
 
-_ = require('lodash')
+flatten = require('lodash/flatten')
 Promise = require('bluebird')
 EventEmitter = require('events').EventEmitter
 pubnub = require('./pubnub')
@@ -69,7 +69,7 @@ exports.subscribe = (pubnubKeys, device) ->
 		channel: channel
 		restore: true
 		message: (payload) ->
-			_.each utils.extractMessages(payload), (data) ->
+			utils.extractMessages(payload).forEach (data) ->
 				emitter.emit('line', data)
 		error: (error) ->
 			emitter.emit('error', error)
@@ -109,4 +109,4 @@ exports.history = (pubnubKeys, device) ->
 		channel = utils.getChannel(device)
 		return pubnub.history(instance, channel)
 	.map(utils.extractMessages)
-	.then(_.flatten)
+	.then(flatten)

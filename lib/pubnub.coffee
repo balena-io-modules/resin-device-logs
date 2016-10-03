@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ###
 
-_ = require('lodash')
 Promise = require('bluebird')
 PubNub = require('pubnub')
 
@@ -48,7 +47,7 @@ exports.getInstance = (options) ->
 # @returns {Promise<String[]>} history messages
 ###
 exports.history = (instance, channel) ->
-	Promise.fromNode (callback) ->
+	Promise.fromCallback (callback) ->
 		instance.history
 			channel: channel
 			callback: (history) ->
@@ -56,6 +55,6 @@ exports.history = (instance, channel) ->
 				# PubNub history format goes like this:
 				# [["Pub1","Pub2","Pub3"],13406746729185766,13406746780720711]
 				# We're only interested in the messages.
-				return callback(null, _.first(history))
+				return callback(null, history[0])
 
 			error: callback

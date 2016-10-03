@@ -18,9 +18,9 @@ limitations under the License.
 /**
  * @module logs
  */
-var EventEmitter, Promise, pubnub, utils, _;
+var EventEmitter, Promise, flatten, pubnub, utils;
 
-_ = require('lodash');
+flatten = require('lodash/flatten');
 
 Promise = require('bluebird');
 
@@ -77,7 +77,7 @@ exports.subscribe = function(pubnubKeys, device) {
     channel: channel,
     restore: true,
     message: function(payload) {
-      return _.each(utils.extractMessages(payload), function(data) {
+      return utils.extractMessages(payload).forEach(function(data) {
         return emitter.emit('line', data);
       });
     },
@@ -125,5 +125,5 @@ exports.history = function(pubnubKeys, device) {
     instance = pubnub.getInstance(pubnubKeys);
     channel = utils.getChannel(device);
     return pubnub.history(instance, channel);
-  }).map(utils.extractMessages).then(_.flatten);
+  }).map(utils.extractMessages).then(flatten);
 };
