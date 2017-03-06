@@ -51,7 +51,7 @@ The object returned by this function also contains the following functions:
 **Kind**: static method of <code>[logs](#module_logs)</code>  
 **Summary**: Subscribe to device logs  
 **Returns**: <code>EventEmitter</code> - logs  
-**Access:** public  
+**Access**: public  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -82,7 +82,7 @@ deviceLogs.on 'error', (error) ->
 **Kind**: static method of <code>[logs](#module_logs)</code>  
 **Summary**: Get device logs history  
 **Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - device logs history  
-**Access:** public  
+**Access**: public  
 
 | Param | Type | Description |
 | --- | --- | --- |
