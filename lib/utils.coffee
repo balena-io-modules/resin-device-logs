@@ -16,20 +16,56 @@ limitations under the License.
 
 isString = require('lodash/isString')
 isArray = require('lodash/isArray')
+assign = require('lodash/assign')
+
+getBaseChannel = (device) ->
+	device.logs_channel or device.uuid
+
+getBaseChannel = (device) ->
+	device.logs_channel or device.uuid
 
 ###*
-# @summary Get logs channel name from a uuid
+# @summary Get logs channel name for the given device
 # @function
 # @protected
 #
 # @param {Object} device - device
-# @returns {String} logs channel
+# @returns {String} logs channel name
 #
 # @example
 # channel = utils.getChannel('...')
 ###
-exports.getChannel = (device) ->
-	return "device-#{device.logs_channel or device.uuid}-logs"
+exports.getChannel = (device, suffix = 'logs') ->
+	return "device-#{getBaseChannel(device)}-#{suffix}"
+
+###*
+# @summary Get logs channel name for the given device
+# @function
+# @protected
+#
+# @param {Object} device - device
+# @returns {String} logs channel name
+#
+# @example
+# channel = utils.getChannel('...')
+###
+exports.getChannel = (device, suffix = 'logs') ->
+	return "device-#{getBaseChannel(device)}-#{suffix}"
+
+###*
+# @summary Get logs and clear logs channel names for the given device
+# @function
+# @protected
+#
+# @param {Object} device - device
+# @returns {Object} { channel, clearChannel }
+#
+# @example
+# channel = utils.getChannel('...')
+###
+exports.getChannels = (device) ->
+	channel: exports.getChannel(device)
+	clearChannel: exports.getChannel(device, 'clear-logs')
 
 ###*
 # @summary Extract messages from PubNub payload
@@ -58,10 +94,12 @@ exports.extractMessages = (message) ->
 		return message.map ({ m, t, s }) ->
 			message: m
 			timestamp: t
-
 			# Make sure it's bool (can be `1`)
 			isSystem: Boolean(s)
 
 	# Legacy supervisor
 	else
-		return [ message ]
+		return [ assign({
+			isSystem: false
+			timestamp: null
+		}, message) ]

@@ -7,7 +7,7 @@ describe 'Utils:', ->
 
 		describe 'given a logs_channel property', ->
 
-			it 'should return the property', ->
+			it 'should use it to build the logs channel', ->
 				device =
 					uuid: 'asdf'
 					logs_channel: 'qwer'
@@ -20,6 +20,30 @@ describe 'Utils:', ->
 					uuid: 'asdf'
 
 				m.chai.expect(utils.getChannel(device)).to.equal('device-asdf-logs')
+
+	describe '.getChannels()', ->
+
+		describe 'given a logs_channel property', ->
+
+			it 'should use it to build the logs channels', ->
+				device =
+					uuid: 'asdf'
+					logs_channel: 'qwer'
+				m.chai.expect(utils.getChannels(device)).to.deep.equal({
+					channel: 'device-qwer-logs'
+					clearChannel: 'device-qwer-clear-logs'
+				})
+
+		describe 'given no logs_channel property', ->
+
+			it 'should use the uuid', ->
+				device =
+					uuid: 'asdf'
+
+				m.chai.expect(utils.getChannels(device)).to.deep.equal({
+					channel: 'device-asdf-logs'
+					clearChannel: 'device-asdf-clear-logs'
+				})
 
 	describe '.extractMessages()', ->
 
@@ -82,5 +106,7 @@ describe 'Utils:', ->
 		it 'should extract an object message', ->
 			result = utils.extractMessages(message: 'foo bar')
 			m.chai.expect(result).to.deep.equal [
+				isSystem: false
 				message: 'foo bar'
+				timestamp: null
 			]

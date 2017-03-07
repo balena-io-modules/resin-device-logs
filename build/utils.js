@@ -15,27 +15,56 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
  */
-var isArray, isString;
+var assign, getBaseChannel, isArray, isString;
 
 isString = require('lodash/isString');
 
 isArray = require('lodash/isArray');
 
+assign = require('lodash/assign');
+
+getBaseChannel = function(device) {
+  return device.logs_channel || device.uuid;
+};
+
 
 /**
- * @summary Get logs channel name from a uuid
+ * @summary Get logs channel name for the given device
  * @function
  * @protected
  *
  * @param {Object} device - device
- * @returns {String} logs channel
+ * @returns {String} logs channel name
  *
  * @example
  * channel = utils.getChannel('...')
  */
 
-exports.getChannel = function(device) {
-  return "device-" + (device.logs_channel || device.uuid) + "-logs";
+exports.getChannel = function(device, suffix) {
+  if (suffix == null) {
+    suffix = 'logs';
+  }
+  return "device-" + (getBaseChannel(device)) + "-" + suffix;
+};
+
+
+/**
+ * @summary Get logs and clear logs channel names for the given device
+ * @function
+ * @protected
+ *
+ * @param {Object} device - device
+ * @returns {Object} { channel, clearChannel }
+ *
+ * @example
+ * channel = utils.getChannel('...')
+ */
+
+exports.getChannels = function(device) {
+  return {
+    channel: exports.getChannel(device),
+    clearChannel: exports.getChannel(device, 'clear-logs')
+  };
 };
 
 
@@ -71,6 +100,11 @@ exports.extractMessages = function(message) {
       };
     });
   } else {
-    return [message];
+    return [
+      assign({
+        isSystem: false,
+        timestamp: null
+      }, message)
+    ];
   }
 };

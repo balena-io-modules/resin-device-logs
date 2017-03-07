@@ -19,7 +19,7 @@ limitations under the License.
 /**
  * @module logs
  */
-var EventEmitter, Promise, flatten, pubnub, utils;
+var EventEmitter, Promise, extractMessages, flatten, getChannels, pubnub, ref;
 
 flatten = require('lodash/flatten');
 
@@ -29,7 +29,7 @@ EventEmitter = require('events').EventEmitter;
 
 pubnub = require('./pubnub');
 
-utils = require('./utils');
+ref = require('./utils'), extractMessages = ref.extractMessages, getChannels = ref.getChannels;
 
 
 /**
@@ -47,8 +47,6 @@ utils = require('./utils');
  * - `.unsubscribe()`: Unsubscribe from the device channel.
  *
  * @param {Object} pubnubKeys - PubNub keys
- * @param {String} pubnubKeys.subscribe_key - subscribe key
- * @param {String} pubnubKeys.publish_key - publish key
  * @param {Object} device - device
  *
  * @returns {EventEmitter} logs
@@ -67,28 +65,38 @@ utils = require('./utils');
  *
  * deviceLogs.on 'error', (error) ->
  * 	throw error
+ *
+ * deviceLogs.on 'clear', ->
+ * 	console.clear()
  */
 
 exports.subscribe = function(pubnubKeys, device) {
-  var channel, emitter, instance;
-  channel = utils.getChannel(device);
+  var channel, clearChannel, emit, emitter, instance, onMessage, ref1;
+  ref1 = getChannels(device), channel = ref1.channel, clearChannel = ref1.clearChannel;
   instance = pubnub.getInstance(pubnubKeys);
   emitter = new EventEmitter();
-  instance.subscribe({
-    channel: channel,
-    restore: true,
-    message: function(payload) {
-      return utils.extractMessages(payload).forEach(function(data) {
-        return emitter.emit('line', data);
-      });
-    },
-    error: function(error) {
-      return emitter.emit('error', error);
+  emit = function(event, data) {
+    return emitter.emit(event, data);
+  };
+  onMessage = function(message) {
+    if (message.channel === clearLogsChannel) {
+      return emit('clear');
     }
+    if (message.channel === channel) {
+      return extractMessages(message.message).forEach(function(payload) {
+        return emit('line', payload);
+      });
+    }
+  };
+  instance.addListener({
+    message: onMessage
+  });
+  instance.subscribe({
+    channels: [channel, clearLogsChannel]
   });
   emitter.unsubscribe = function() {
     return instance.unsubscribe({
-      channel: channel
+      channels: [channel, clearLogsChannel]
     });
   };
   return emitter;
@@ -101,9 +109,9 @@ exports.subscribe = function(pubnubKeys, device) {
  * @public
  *
  * @param {Object} pubnubKeys - PubNub keys
- * @param {String} pubnubKeys.subscribe_key - subscribe key
- * @param {String} pubnubKeys.publish_key - publish key
  * @param {Object} device - device
+ * @param {Object} [options] - other options supported by
+ * https://www.pubnub.com/docs/nodejs-javascript/api-reference#history
  *
  * @returns {Promise<Object[]>} device logs history
  *
@@ -120,11 +128,39 @@ exports.subscribe = function(pubnubKeys, device) {
  * 		console.log(line.timestamp)
  */
 
-exports.history = function(pubnubKeys, device) {
+exports.history = function(pubnubKeys, device, options) {
   return Promise["try"](function() {
     var channel, instance;
     instance = pubnub.getInstance(pubnubKeys);
-    channel = utils.getChannel(device);
-    return pubnub.history(instance, channel);
-  }).map(utils.extractMessages).then(flatten);
+    channel = getChannels(device).channel;
+    return pubnub.history(instance, channel, options);
+  }).map(extractMessages).then(flatten);
+};
+
+
+/**
+ * @summary Clear device logs history
+ * @function
+ * @public
+ *
+ * @param {Object} pubnubKeys - PubNub keys
+ * @param {Object} device - device
+ *
+ * @returns {Promise} device logs history
+ */
+
+exports.clear = function(pubnubKeys, device) {
+  return Promise["try"](function() {
+    var clearChannel, instance;
+    instance = pubnub.getInstance(pubnubKeys);
+    clearChannel = getChannels(device).clearChannel;
+    return instance.time().then(function(arg) {
+      var timetoken;
+      timetoken = arg.timetoken;
+      return instance.publish({
+        channel: clearChannel,
+        message: timetoken
+      });
+    });
+  });
 };
