@@ -11,7 +11,7 @@ global.Promise or= Promise
 
 describe 'PubNub:', ->
 
-	@timeout(3000)
+	@timeout(5000)
 
 	describe '.getInstance()', ->
 
@@ -33,27 +33,28 @@ describe 'PubNub:', ->
 
 	describe '.history()', ->
 
-		describe 'should retrieve valid history', ->
+		beforeEach ->
+			@instance = pubnub.getInstance(pubnubKeys)
+			@channel = randomChannel()
 
-			beforeEach ->
-				@instance = pubnub.getInstance(pubnubKeys)
-				@channel = randomChannel()
+			return Promise.mapSeries([1..5], (i) =>
+				@instance.publish({
+					channel: @channel
+					message: "Message #{i}"
+				})
+			).delay(1000)
+			.catch (err) ->
+				console.error('Error', err)
+				throw err
 
-				return Promise.mapSeries([1..5], (i) =>
-					@instance.publish({
-						channel: @channel
-						message: "Message #{i}"
-					})
-				).delay(500)
+		it 'should retrieve the history messages', ->
+			promise = pubnub.history(@instance, @channel)
+			m.chai.expect(promise).to.eventually.become([
+				'Message 1', 'Message 2', 'Message 3', 'Message 4', 'Message 5'
+			])
 
-			it 'should retrieve the history messages', ->
-				promise = pubnub.history(@instance, @channel)
-				m.chai.expect(promise).to.eventually.become([
-					'Message 1', 'Message 2', 'Message 3', 'Message 4', 'Message 5'
-				])
-
-			it 'should retrieve the history messages and support extra options', ->
-				promise = pubnub.history(@instance, @channel, count: 2)
-				m.chai.expect(promise).to.eventually.become([
-					'Message 4', 'Message 5'
-				])
+		it 'should retrieve the history messages and support extra options', ->
+			promise = pubnub.history(@instance, @channel, count: 2)
+			m.chai.expect(promise).to.eventually.become([
+				'Message 4', 'Message 5'
+			])

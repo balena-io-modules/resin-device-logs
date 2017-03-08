@@ -19,10 +19,15 @@ limitations under the License.
 ###
 
 flatten = require('lodash/flatten')
+assign = require('lodash/assign')
 Promise = require('bluebird')
 { EventEmitter } = require('events')
+
 pubnub = require('./pubnub')
 { extractMessages, getChannels } = require('./utils')
+
+# https://www.pubnub.com/docs/nodejs-javascript/api-reference#listeners-categories
+SUBSCRIBE_ERROR_CATEGORY = 'PNNetworkIssuesCategory'
 
 ###*
 # @summary Subscribe to device logs
@@ -32,7 +37,8 @@ pubnub = require('./pubnub')
 # @description This function emits various events:
 #
 # - `line`: When a log line arrives, passing an object as an argument.
-# - `error`: When an error occurs, passing an error instance as an argument.
+# - `clear`: When the `clear` request is published (see the `clear` method)
+# - `error`: When an error occurs, passing an error code as an argument.
 #
 # The object returned by this function also contains the following functions:
 #
@@ -48,7 +54,7 @@ pubnub = require('./pubnub')
 # 	subscribe_key: '...'
 # 	publish_key: '...'
 # ,
-# 	uuid: '...'
+# 	device
 #
 # deviceLogs.on 'line', (line) ->
 # 	console.log(line.message)
@@ -77,12 +83,19 @@ exports.subscribe = (pubnubKeys, device) ->
 			extractMessages(message.message).forEach (payload) ->
 				emit('line', payload)
 
-	instance.addListener(message: onMessage)
+	pubnubListener =
+		message: onMessage
+		status: ({ category }) ->
+			if category is SUBSCRIBE_ERROR_CATEGORY
+				emit('error', SUBSCRIBE_ERROR_CATEGORY)
+
+	instance.addListener(pubnubListener)
 
 	instance.subscribe
 		channels: [ channel, clearChannel ]
 
 	emitter.unsubscribe = ->
+		instance.removeListener(pubnubListener)
 		instance.unsubscribe
 			channels: [ channel, clearChannel ]
 
@@ -105,7 +118,7 @@ exports.subscribe = (pubnubKeys, device) ->
 # 	subscribe_key: '...'
 # 	publish_key: '...'
 # ,
-# 	uuid: '...'
+# 	device
 # .then (lines) ->
 # 	for line in lines
 # 		console.log(line.message)
@@ -113,12 +126,44 @@ exports.subscribe = (pubnubKeys, device) ->
 # 		console.log(line.timestamp)
 ###
 exports.history = (pubnubKeys, device, options) ->
-	Promise.try ->
+	return Promise.try ->
 		instance = pubnub.getInstance(pubnubKeys)
 		{ channel } = getChannels(device)
 		return pubnub.history(instance, channel, options)
 	.map(extractMessages)
 	.then(flatten)
+
+###*
+# @summary Get device logs history after the most recent clear
+# @function
+# @public
+#
+# @param {Object} pubnubKeys - PubNub keys
+# @param {Object} device - device
+# @param {Object} [options] - other options supported by
+# https://www.pubnub.com/docs/nodejs-javascript/api-reference#history
+#
+# @returns {Promise<Object[]>} device logs history
+#
+# @example
+# logs.historySinceLastClear
+# 	subscribe_key: '...'
+# 	publish_key: '...'
+# ,
+# 	device
+# .then (lines) ->
+# 	for line in lines
+# 		console.log(line.message)
+# 		console.log(line.isSystem)
+# 		console.log(line.timestamp)
+###
+exports.historySinceLastClear = (pubnubKeys, device, options) ->
+	return exports.getLastClearTime(pubnubKeys, device)
+	.then (endTime) ->
+		options = assign({ count: 200 }, options, {
+			end: endTime
+		})
+		return exports.history(pubnubKeys, device, options)
 
 ###*
 # @summary Clear device logs history
@@ -128,14 +173,33 @@ exports.history = (pubnubKeys, device, options) ->
 # @param {Object} pubnubKeys - PubNub keys
 # @param {Object} device - device
 #
-# @returns {Promise} device logs history
+# @returns {Promise} - resolved witht he PubNub publish response
 ###
 exports.clear = (pubnubKeys, device) ->
-	Promise.try ->
+	return Promise.try ->
 		instance = pubnub.getInstance(pubnubKeys)
 		{ clearChannel } = getChannels(device)
 		return instance.time()
 		.then ({ timetoken }) ->
-			instance.publish
+			return instance.publish
 				channel: clearChannel
 				message: timetoken
+
+###*
+# @summary Get the most recent device logs history clear time
+# @function
+# @public
+#
+# @param {Object} pubnubKeys - PubNub keys
+# @param {Object} device - device
+#
+# @returns {Promise<number>} timetoken
+###
+exports.getLastClearTime = (pubnubKeys, device) ->
+	return Promise.try ->
+		instance = pubnub.getInstance(pubnubKeys)
+		{ clearChannel } = getChannels(device)
+		return pubnub.history(instance, clearChannel, {
+			count: 1
+		}).then (messages) ->
+			messages?[0] or 0

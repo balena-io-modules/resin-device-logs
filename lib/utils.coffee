@@ -21,23 +21,6 @@ assign = require('lodash/assign')
 getBaseChannel = (device) ->
 	device.logs_channel or device.uuid
 
-getBaseChannel = (device) ->
-	device.logs_channel or device.uuid
-
-###*
-# @summary Get logs channel name for the given device
-# @function
-# @protected
-#
-# @param {Object} device - device
-# @returns {String} logs channel name
-#
-# @example
-# channel = utils.getChannel('...')
-###
-exports.getChannel = (device, suffix = 'logs') ->
-	return "device-#{getBaseChannel(device)}-#{suffix}"
-
 ###*
 # @summary Get logs channel name for the given device
 # @function

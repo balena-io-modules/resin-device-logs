@@ -19,9 +19,11 @@ limitations under the License.
 /**
  * @module logs
  */
-var EventEmitter, Promise, extractMessages, flatten, getChannels, pubnub, ref;
+var EventEmitter, Promise, SUBSCRIBE_ERROR_CATEGORY, assign, extractMessages, flatten, getChannels, pubnub, ref;
 
 flatten = require('lodash/flatten');
+
+assign = require('lodash/assign');
 
 Promise = require('bluebird');
 
@@ -30,6 +32,8 @@ EventEmitter = require('events').EventEmitter;
 pubnub = require('./pubnub');
 
 ref = require('./utils'), extractMessages = ref.extractMessages, getChannels = ref.getChannels;
+
+SUBSCRIBE_ERROR_CATEGORY = 'PNNetworkIssuesCategory';
 
 
 /**
@@ -40,7 +44,8 @@ ref = require('./utils'), extractMessages = ref.extractMessages, getChannels = r
  * @description This function emits various events:
  *
  * - `line`: When a log line arrives, passing an object as an argument.
- * - `error`: When an error occurs, passing an error instance as an argument.
+ * - `clear`: When the `clear` request is published (see the `clear` method)
+ * - `error`: When an error occurs, passing an error code as an argument.
  *
  * The object returned by this function also contains the following functions:
  *
@@ -56,7 +61,7 @@ ref = require('./utils'), extractMessages = ref.extractMessages, getChannels = r
  * 	subscribe_key: '...'
  * 	publish_key: '...'
  * ,
- * 	uuid: '...'
+ * 	device
  *
  * deviceLogs.on 'line', (line) ->
  * 	console.log(line.message)
@@ -71,7 +76,7 @@ ref = require('./utils'), extractMessages = ref.extractMessages, getChannels = r
  */
 
 exports.subscribe = function(pubnubKeys, device) {
-  var channel, clearChannel, emit, emitter, instance, onMessage, ref1;
+  var channel, clearChannel, emit, emitter, instance, onMessage, pubnubListener, ref1;
   ref1 = getChannels(device), channel = ref1.channel, clearChannel = ref1.clearChannel;
   instance = pubnub.getInstance(pubnubKeys);
   emitter = new EventEmitter();
@@ -79,7 +84,7 @@ exports.subscribe = function(pubnubKeys, device) {
     return emitter.emit(event, data);
   };
   onMessage = function(message) {
-    if (message.channel === clearLogsChannel) {
+    if (message.channel === clearChannel) {
       return emit('clear');
     }
     if (message.channel === channel) {
@@ -88,15 +93,24 @@ exports.subscribe = function(pubnubKeys, device) {
       });
     }
   };
-  instance.addListener({
-    message: onMessage
-  });
+  pubnubListener = {
+    message: onMessage,
+    status: function(arg) {
+      var category;
+      category = arg.category;
+      if (category === SUBSCRIBE_ERROR_CATEGORY) {
+        return emit('error', SUBSCRIBE_ERROR_CATEGORY);
+      }
+    }
+  };
+  instance.addListener(pubnubListener);
   instance.subscribe({
-    channels: [channel, clearLogsChannel]
+    channels: [channel, clearChannel]
   });
   emitter.unsubscribe = function() {
+    instance.removeListener(pubnubListener);
     return instance.unsubscribe({
-      channels: [channel, clearLogsChannel]
+      channels: [channel, clearChannel]
     });
   };
   return emitter;
@@ -120,7 +134,7 @@ exports.subscribe = function(pubnubKeys, device) {
  * 	subscribe_key: '...'
  * 	publish_key: '...'
  * ,
- * 	uuid: '...'
+ * 	device
  * .then (lines) ->
  * 	for line in lines
  * 		console.log(line.message)
@@ -139,6 +153,43 @@ exports.history = function(pubnubKeys, device, options) {
 
 
 /**
+ * @summary Get device logs history after the most recent clear
+ * @function
+ * @public
+ *
+ * @param {Object} pubnubKeys - PubNub keys
+ * @param {Object} device - device
+ * @param {Object} [options] - other options supported by
+ * https://www.pubnub.com/docs/nodejs-javascript/api-reference#history
+ *
+ * @returns {Promise<Object[]>} device logs history
+ *
+ * @example
+ * logs.historySinceLastClear
+ * 	subscribe_key: '...'
+ * 	publish_key: '...'
+ * ,
+ * 	device
+ * .then (lines) ->
+ * 	for line in lines
+ * 		console.log(line.message)
+ * 		console.log(line.isSystem)
+ * 		console.log(line.timestamp)
+ */
+
+exports.historySinceLastClear = function(pubnubKeys, device, options) {
+  return exports.getLastClearTime(pubnubKeys, device).then(function(endTime) {
+    options = assign({
+      count: 200
+    }, options, {
+      end: endTime
+    });
+    return exports.history(pubnubKeys, device, options);
+  });
+};
+
+
+/**
  * @summary Clear device logs history
  * @function
  * @public
@@ -146,7 +197,7 @@ exports.history = function(pubnubKeys, device, options) {
  * @param {Object} pubnubKeys - PubNub keys
  * @param {Object} device - device
  *
- * @returns {Promise} device logs history
+ * @returns {Promise} - resolved witht he PubNub publish response
  */
 
 exports.clear = function(pubnubKeys, device) {
@@ -161,6 +212,31 @@ exports.clear = function(pubnubKeys, device) {
         channel: clearChannel,
         message: timetoken
       });
+    });
+  });
+};
+
+
+/**
+ * @summary Get the most recent device logs history clear time
+ * @function
+ * @public
+ *
+ * @param {Object} pubnubKeys - PubNub keys
+ * @param {Object} device - device
+ *
+ * @returns {Promise<number>} timetoken
+ */
+
+exports.getLastClearTime = function(pubnubKeys, device) {
+  return Promise["try"](function() {
+    var clearChannel, instance;
+    instance = pubnub.getInstance(pubnubKeys);
+    clearChannel = getChannels(device).clearChannel;
+    return pubnub.history(instance, clearChannel, {
+      count: 1
+    }).then(function(messages) {
+      return (messages != null ? messages[0] : void 0) || 0;
     });
   });
 };

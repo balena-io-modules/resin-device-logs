@@ -61,15 +61,15 @@ exports.getInstance = memoize(function(options) {
  * @protected
  *
  * @description
- * **BE CAREFUL!** This function reacts poorly to non valid channels.
- * It just returns an empty array as if it didn't have any history messages.
+ * **Note:** For invalid (non-existent) channel this will return
+ * an empty array as if it exists but doesn't have any history messages.
  *
  * @param {Object} instance - PubNub instance
  * @param {String} channel - channel
  * @param {Object} [options] - other options supported by
  * https://www.pubnub.com/docs/nodejs-javascript/api-reference#history
  *
- * @returns {Promise<String[]>} history messages
+ * @returns {Promise<any[]>} history messages
  */
 
 exports.history = function(instance, channel, options) {
@@ -82,6 +82,8 @@ exports.history = function(instance, channel, options) {
   return instance.history(options).then(function(arg) {
     var messages;
     messages = arg.messages;
-    return messages != null ? messages[0] : void 0;
+    return messages.map(function(m) {
+      return m.entry;
+    });
   });
 };
