@@ -3,6 +3,8 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.0] - 2017-03-10
+
 ### Changed
 
 - Upgrade to PubNub SDK v4
@@ -12,7 +14,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 	- New `historySinceLastClear` method that tolerates the clear logs functionality
 	Note: the amount of historic messages for this method is limited to 200 by default. Can be overridden by passing the `{ count: N }` options object as the 3rd argument.
 
-## [3.0.1] - 2015-07-26
+## [3.0.1] - 2016-10-04
 
 ### Changed
 
