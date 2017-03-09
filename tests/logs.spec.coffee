@@ -1,154 +1,166 @@
+Promise = require('bluebird')
 m = require('mochainon')
 pubnub = require('../lib/pubnub')
+{ getChannels } = require('../lib/utils')
 logs = require('../lib/logs')
 
-pubnubKeys =
-	subscribe_key: 'sub-c-apqw93io-ioqwix2o3io2i-dsddskcdab7fe'
-	publish_key: 'pub-c-kkldjfij3-askajcnd-i98323224-ae2b226'
+pubnubKeys = require('./config')
+{ randomId, randomChannel } = require('./helpers')
+
+global.Promise ?= Promise
 
 describe 'Logs:', ->
 
+	@timeout(5000)
+
+	beforeEach ->
+		@instance = pubnub.getInstance(pubnubKeys)
+		@device = {
+			uuid: randomId()
+			logs_channel: randomId()
+		}
+		@channel = getChannels(@device).channel
+
 	describe '.subscribe()', ->
 
-		describe 'given an instance that connects and receives messages', ->
+		it 'should send message events', (done) ->
+			pubnubStream = logs.subscribe(pubnubKeys, @device)
+			lines = []
+			pubnubStream.on 'line', (line) ->
+				lines.push(line)
 
-			beforeEach ->
-				@pubnubGetInstanceStub = m.sinon.stub(pubnub, 'getInstance')
-				@pubnubGetInstanceStub.returns
-					subscribe: (options) ->
-						setTimeout ->
-							options.message('foo')
-
-							setTimeout ->
-								options.message('bar')
-
-								setTimeout ->
-									options.message('baz')
-								, 1
-							, 1
-						, 1
-
-			afterEach ->
-				@pubnubGetInstanceStub.restore()
-
-			it 'should send message events', (done) ->
-				pubnubStream = logs.subscribe(pubnubKeys, uuid: 'asdf')
-				lines = []
-				pubnubStream.on 'line', (line) ->
-					lines.push(line)
-
-					if lines.length is 3
-						m.chai.expect(lines).to.deep.equal [
-							{
-								message: 'foo'
-								isSystem: false
-								timestamp: null
-							}
-							{
-								message: 'bar'
-								isSystem: false
-								timestamp: null
-							}
-							{
-								message: 'baz'
-								isSystem: false
-								timestamp: null
-							}
-						]
-						done()
-
-		describe 'given an instance that connects and sends an error', ->
-
-			beforeEach ->
-				@pubnubGetInstanceStub = m.sinon.stub(pubnub, 'getInstance')
-				@pubnubGetInstanceStub.returns
-					subscribe: (options) ->
-						setTimeout ->
-							options.error(new Error('pubnub error'))
-						, 1
-
-			afterEach ->
-				@pubnubGetInstanceStub.restore()
-
-			it 'should receive the error', (done) ->
-				pubnubStream = logs.subscribe(pubnubKeys, uuid: 'asdf')
-				pubnubStream.on 'error', (error) ->
-					m.chai.expect(error).to.be.an.instanceof(Error)
-					m.chai.expect(error.message).to.equal('pubnub error')
-					done()
-
-	describe '.history()', ->
-
-		describe 'given an error when getting the instance', ->
-
-			beforeEach ->
-				@pubnubGetInstanceStub = m.sinon.stub(pubnub, 'getInstance')
-				@pubnubGetInstanceStub.throws(new Error('pubnub error'))
-
-			afterEach ->
-				@pubnubGetInstanceStub.restore()
-
-			it 'should reject with that error', ->
-				promise = logs.history(pubnubKeys, uuid: 'asdf')
-				m.chai.expect(promise).to.be.rejectedWith('pubnub error')
-
-		describe 'given an instance that reacts to a valid channel', ->
-
-			beforeEach ->
-				@pubnubGetInstanceStub = m.sinon.stub(pubnub, 'getInstance')
-				@pubnubGetInstanceStub.returns
-					history: (options) ->
-
-						# This check has the double benefit that we implicitly
-						# check that the correct channel name is passed internally.
-						return if options.channel isnt 'device-asdf-logs'
-
-						setTimeout ->
-							options.callback [
-								[ 'Foo', 'Bar', 'Baz' ]
-								13406746729185766
-								13406746780720711
-							]
-						, 1
-
-			afterEach ->
-				@pubnubGetInstanceStub.restore()
-
-			describe 'given the correct uuid', ->
-
-				it 'should eventually return the messages', ->
-					promise = logs.history(pubnubKeys, uuid: 'asdf')
-					m.chai.expect(promise).to.eventually.become [
+				if lines.length is 3
+					m.chai.expect(lines).to.deep.equal [
 						{
-							message: 'Foo'
+							message: 'foo'
 							isSystem: false
 							timestamp: null
 						}
 						{
-							message: 'Bar'
+							message: 'bar'
 							isSystem: false
 							timestamp: null
 						}
 						{
-							message: 'Baz'
+							message: 'baz'
 							isSystem: false
 							timestamp: null
 						}
 					]
+					done()
 
-		describe 'given an instance that returns an error', ->
+			Promise.mapSeries(['foo', 'bar', 'baz'], (m) =>
+				@instance.publish({
+					channel: @channel
+					message: m
+				})
+			).catch (err) ->
+				console.error('Error', err)
+				throw err
 
-			beforeEach ->
-				@pubnubGetInstanceStub = m.sinon.stub(pubnub, 'getInstance')
-				@pubnubGetInstanceStub.returns
-					history: (options) ->
-						setTimeout ->
-							options.error(new Error('logs error'))
-						, 1
+			return
 
-			afterEach ->
-				@pubnubGetInstanceStub.restore()
+	describe '.history()', ->
 
-			it 'should reject with the error', ->
-				promise = logs.history(pubnubKeys, uuid: 'asdf')
-				m.chai.expect(promise).to.be.rejectedWith('logs error')
+		beforeEach ->
+			return Promise.mapSeries(['Foo', 'Bar', 'Baz'], (m) =>
+				@instance.publish({
+					channel: @channel
+					message: m
+				})
+			).delay(500)
+			.catch (err) ->
+				console.error('Error', err)
+				throw err
+
+		it 'should eventually return the messages', ->
+			promise = logs.history(pubnubKeys, @device)
+			m.chai.expect(promise).to.eventually.become [
+				{
+					message: 'Foo'
+					isSystem: false
+					timestamp: null
+				}
+				{
+					message: 'Bar'
+					isSystem: false
+					timestamp: null
+				}
+				{
+					message: 'Baz'
+					isSystem: false
+					timestamp: null
+				}
+			]
+
+	describe '.clear() and historySinceLastClear()', ->
+
+		@timeout(10000)
+
+		beforeEach ->
+			@instance = pubnub.getInstance(pubnubKeys)
+			@device = {
+				uuid: randomId()
+				logs_channel: randomId()
+			}
+			@channel = getChannels(@device).channel
+
+		it 'should set the lower timestamp bound', ->
+			return Promise.mapSeries([1..3], (i) =>
+				@instance.publish({
+					channel: @channel
+					message: "Message #{i}"
+				})
+			).delay(1000)
+			.catch (err) ->
+				console.error('Error', err)
+				throw err
+			.then =>
+				logs.history(pubnubKeys, @device)
+			.then (messages) ->
+				# The original logs count
+				m.chai.expect(messages.length).to.equal(3)
+			.then =>
+				logs.clear(pubnubKeys, @device)
+				.delay(1000)
+			.then =>
+				logs.history(pubnubKeys, @device)
+			.then (messages) ->
+				# The original logs count should not change
+				m.chai.expect(messages.length).to.equal(3)
+			.then =>
+				logs.historySinceLastClear(pubnubKeys, @device)
+			.then (messages) ->
+				# The clear should have effect here
+				m.chai.expect(messages.length).to.equal(0)
+			.then =>
+				return Promise.mapSeries([4..5], (i) =>
+					@instance.publish({
+						channel: @channel
+						message: "Message #{i}"
+					})
+				).delay(1000)
+				.catch (err) ->
+					console.error('Error', err)
+					throw err
+			.then =>
+				logs.history(pubnubKeys, @device)
+			.then (messages) ->
+				# The original logs count should not change
+				m.chai.expect(messages.length).to.equal(5)
+			.then =>
+				logs.historySinceLastClear(pubnubKeys, @device)
+			.then (messages) ->
+				# The clear should have effect here
+				m.chai.expect(messages).to.deep.equal([
+					{
+						message: 'Message 4'
+						isSystem: false
+						timestamp: null
+					}
+					{
+						message: 'Message 5'
+						isSystem: false
+						timestamp: null
+					}
+				])

@@ -14,8 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ###
 
+assign = require('lodash/assign')
+memoize = require('lodash/memoize')
 Promise = require('bluebird')
 PubNub = require('pubnub')
+
+getPublishKey = (options) -> options.publishKey or options.publish_key
+
+getSubscribeKey = (options) -> options.subscribeKey or options.subscribe_key
 
 ###*
 # @summary Get a PubNub instance
@@ -23,14 +29,18 @@ PubNub = require('pubnub')
 # @protected
 #
 # @param {Object} options - PubNub options
-# @param {String} options.subscribe_key - subscribe key
-# @param {String} options.publish_key - publish key
+# @param {String} options.subscribeKey - subscribe key (`subscribe_key` is also supported)
+# @param {String} options.publishKey - publish key (`publish_key` is also supported)
 #
 # @returns {Object} PubNub instance
 ###
-exports.getInstance = (options) ->
-	options.ssl = true
-	return PubNub.init(options)
+exports.getInstance = memoize (options) ->
+	new PubNub({
+		publishKey: getPublishKey(options)
+		subscribeKey: getSubscribeKey(options)
+		ssl: true
+	})
+, getSubscribeKey
 
 ###*
 # @summary Get logs history from an instance
@@ -38,23 +48,18 @@ exports.getInstance = (options) ->
 # @protected
 #
 # @description
-# **BE CAREFUL!** This function reacts poorly to non valid channels.
-# It just returns an empty array as if it didn't have any history messages.
+# **Note:** For invalid (non-existent) channel this will return
+# an empty array as if it exists but doesn't have any history messages.
 #
 # @param {Object} instance - PubNub instance
 # @param {String} channel - channel
+# @param {Object} [options] - other options supported by
+# https://www.pubnub.com/docs/nodejs-javascript/api-reference#history
 #
-# @returns {Promise<String[]>} history messages
+# @returns {Promise<any[]>} history messages
 ###
-exports.history = (instance, channel) ->
-	Promise.fromCallback (callback) ->
-		instance.history
-			channel: channel
-			callback: (history) ->
-
-				# PubNub history format goes like this:
-				# [["Pub1","Pub2","Pub3"],13406746729185766,13406746780720711]
-				# We're only interested in the messages.
-				return callback(null, history[0])
-
-			error: callback
+exports.history = (instance, channel, options = {}) ->
+	options = assign({ channel }, options)
+	return instance.history(options)
+	.then ({ messages }) ->
+		messages.map((m) -> m.entry)

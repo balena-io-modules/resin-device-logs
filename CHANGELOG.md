@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+### Changed
+
+- Upgrade to PubNub SDK v4
+- Added the clear logs functionality (previously supported by the Resin.io UI)
+	- New `clear` method
+	- New `clear` event for subscriptions
+	- New `historySinceLastClear` method that tolerates the clear logs functionality
+	Note: the amount of historic messages for this method is limited to 200 by default. Can be overridden by passing the `{ count: N }` options object as the 3rd argument.
+
 ## [3.0.1] - 2015-07-26
 
 ### Changed
