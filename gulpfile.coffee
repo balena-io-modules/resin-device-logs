@@ -34,7 +34,6 @@ gulp.task 'lint', ->
 
 gulp.task 'build', [
 	'lint'
-	'test'
 	'coffee'
 ]
 
