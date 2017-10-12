@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.1] - 2017-10-12
+
+## Changed
+
+- Pin pubnub version to avoid broken release
+
 ## [3.1.0] - 2017-03-10
 
 ### Changed
@@ -51,6 +57,8 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Accept a device object instead of a uuid as argument to public functions.
 - Give precedence to `logs_channel` device property.
 
+[3.1.1]: https://github.com/resin-io/resin-device-logs/compare/v3.1.0...v3.1.1
+[3.1.0]: https://github.com/resin-io/resin-device-logs/compare/v3.0.1...v3.1.0
 [3.0.0]: https://github.com/resin-io/resin-device-logs/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/resin-io/resin-device-logs/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/resin-io/resin-device-logs/compare/v2.0.2...v2.1.0
