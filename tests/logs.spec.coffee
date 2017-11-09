@@ -29,7 +29,11 @@ describe 'Logs:', ->
 			Promise.mapSeries ['foo', 'bar', 'baz'], (m) =>
 				@instance.publish
 					channel: @channel
-					message: m
+					message: [
+						m: m
+						t: null
+						s: false
+					]
 			.thenReturn(getMessages(pubnubStream, 3))
 			.then (messages) ->
 				m.chai.expect(messages).to.deep.equal [
@@ -52,7 +56,11 @@ describe 'Logs:', ->
 			Promise.mapSeries ['Foo', 'Bar', 'Baz'], (m) =>
 				@instance.publish
 					channel: @channel
-					message: m
+					message: [
+						m: m
+						t: null
+						s: false
+					]
 			.delay(500)
 			.then => logs.history(pubnubKeys, @device)
 			.then (messages) ->
@@ -74,7 +82,11 @@ describe 'Logs:', ->
 			Promise.mapSeries [1..3], (i) =>
 				@instance.publish
 					channel: @channel
-					message: "Message #{i}"
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
 			.delay(1000)
 			.then => logs.clear(pubnubKeys, @device)
 			.delay(1000)
@@ -88,7 +100,11 @@ describe 'Logs:', ->
 			Promise.mapSeries [1..3], (i) =>
 				@instance.publish
 					channel: @channel
-					message: "Message #{i}"
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
 			.delay(500)
 			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
@@ -110,7 +126,11 @@ describe 'Logs:', ->
 			Promise.mapSeries [1..3], (i) =>
 				@instance.publish
 					channel: @channel
-					message: "Message #{i}"
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
 			.delay(500)
 			.then => logs.clear(pubnubKeys, @device)
 			.delay(500)
@@ -118,7 +138,11 @@ describe 'Logs:', ->
 				Promise.mapSeries [4..5], (i) =>
 					@instance.publish
 						channel: @channel
-						message: "Message #{i}"
+						message: [
+							m: "Message #{i}"
+							t: null
+							s: false
+						]
 			.delay(500)
 			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
