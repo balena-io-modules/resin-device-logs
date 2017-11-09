@@ -40,14 +40,17 @@ describe 'Logs:', ->
 					message: 'foo'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'bar'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'baz'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				]
 
 	describe '.history()', ->
@@ -68,14 +71,17 @@ describe 'Logs:', ->
 					message: 'Foo'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'Bar'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'Baz'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				]
 
 		it 'should ignore .clear', ->
@@ -112,14 +118,17 @@ describe 'Logs:', ->
 					message: 'Message 1'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'Message 2'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'Message 3'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				]
 
 		it 'should only show messages since the .clear(), if it has been called', ->
@@ -150,8 +159,10 @@ describe 'Logs:', ->
 					message: 'Message 4'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				,
 					message: 'Message 5'
 					isSystem: false
 					timestamp: null
+					serviceId: null
 				]

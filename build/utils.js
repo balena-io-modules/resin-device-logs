@@ -86,24 +86,27 @@ exports.extractMessages = function(message) {
       {
         isSystem: /\[system\]/.test(message),
         message: message,
-        timestamp: null
+        timestamp: null,
+        serviceId: null
       }
     ];
   } else if (isArray(message)) {
     return message.map(function(arg) {
-      var m, s, t;
-      m = arg.m, t = arg.t, s = arg.s;
+      var c, m, s, t;
+      m = arg.m, t = arg.t, s = arg.s, c = arg.c;
       return {
         message: m,
         timestamp: t,
-        isSystem: Boolean(s)
+        isSystem: Boolean(s),
+        serviceId: c != null ? c : null
       };
     });
   } else {
     return [
       assign({
         isSystem: false,
-        timestamp: null
+        timestamp: null,
+        serviceId: null
       }, message)
     ];
   }

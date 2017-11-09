@@ -53,6 +53,7 @@ describe 'Utils:', ->
 				isSystem: false
 				message: 'foo bar'
 				timestamp: null
+				serviceId: null
 			]
 
 		it 'should extract a string system message', ->
@@ -61,6 +62,7 @@ describe 'Utils:', ->
 				isSystem: true
 				message: '[system] foo bar'
 				timestamp: null
+				serviceId: null
 			]
 
 		it 'should extract an array message', ->
@@ -72,15 +74,27 @@ describe 'Utils:', ->
 					m: 'Bar'
 					s: 0
 					t: 12345
+				,
+					m: 'Multicontainer'
+					s: 0
+					t: 54321
+					c: 123
 			])
 			m.chai.expect(result).to.deep.equal [
 					isSystem: false
 					message: 'Foo'
 					timestamp: 12345
+					serviceId: null
 				,
 					isSystem: false
 					message: 'Bar'
 					timestamp: 12345
+					serviceId: null
+				,
+					isSystem: false
+					message: 'Multicontainer'
+					timestamp: 54321
+					serviceId: 123
 			]
 
 		it 'should extract an array system message', ->
@@ -97,10 +111,12 @@ describe 'Utils:', ->
 					isSystem: true
 					message: 'Foo'
 					timestamp: 12345
+					serviceId: null
 				,
 					isSystem: true
 					message: 'Bar'
 					timestamp: 12345
+					serviceId: null
 			]
 
 		it 'should extract an object message', ->
@@ -109,4 +125,5 @@ describe 'Utils:', ->
 				isSystem: false
 				message: 'foo bar'
 				timestamp: null
+				serviceId: null
 			]
