@@ -11,7 +11,8 @@ global.Promise ?= Promise
 
 describe 'Logs:', ->
 
-	@timeout(6000)
+	@timeout(10000)
+	@retries(5)
 
 	beforeEach ->
 		@instance = pubnub.getInstance(pubnubKeys)
@@ -64,7 +65,7 @@ describe 'Logs:', ->
 						t: null
 						s: false
 					]
-			.delay(500)
+			.delay(1000)
 			.then => logs.history(pubnubKeys, @device)
 			.then (messages) ->
 				m.chai.expect(messages).to.deep.equal [
@@ -111,7 +112,7 @@ describe 'Logs:', ->
 						t: null
 						s: false
 					]
-			.delay(500)
+			.delay(1000)
 			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
 				m.chai.expect(messages).to.deep.equal [
@@ -140,9 +141,9 @@ describe 'Logs:', ->
 						t: null
 						s: false
 					]
-			.delay(500)
+			.delay(1000)
 			.then => logs.clear(pubnubKeys, @device)
-			.delay(500)
+			.delay(1000)
 			.then =>
 				Promise.mapSeries [4..5], (i) =>
 					@instance.publish
@@ -152,7 +153,7 @@ describe 'Logs:', ->
 							t: null
 							s: false
 						]
-			.delay(500)
+			.delay(1000)
 			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
 				m.chai.expect(messages).to.deep.equal [
