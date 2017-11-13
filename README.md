@@ -52,7 +52,7 @@ The object returned by this function also contains the following functions:
 
 - `.unsubscribe()`: Unsubscribe from the device channel.
 
-**Kind**: static method of <code>[logs](#module_logs)</code>  
+**Kind**: static method of [<code>logs</code>](#module_logs)  
 **Summary**: Subscribe to device logs  
 **Returns**: <code>EventEmitter</code> - logs  
 **Access**: public  
@@ -84,7 +84,7 @@ deviceLogs.on 'clear', ->
 <a name="module_logs.history"></a>
 
 ### logs.history(pubnubKeys, device, [options]) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
-**Kind**: static method of <code>[logs](#module_logs)</code>  
+**Kind**: static method of [<code>logs</code>](#module_logs)  
 **Summary**: Get device logs history  
 **Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - device logs history  
 **Access**: public  
@@ -111,7 +111,7 @@ logs.history
 <a name="module_logs.historySinceLastClear"></a>
 
 ### logs.historySinceLastClear(pubnubKeys, device, [options]) ⇒ <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code>
-**Kind**: static method of <code>[logs](#module_logs)</code>  
+**Kind**: static method of [<code>logs</code>](#module_logs)  
 **Summary**: Get device logs history after the most recent clear  
 **Returns**: <code>Promise.&lt;Array.&lt;Object&gt;&gt;</code> - device logs history  
 **Access**: public  
@@ -138,7 +138,7 @@ logs.historySinceLastClear
 <a name="module_logs.clear"></a>
 
 ### logs.clear(pubnubKeys, device) ⇒ <code>Promise</code>
-**Kind**: static method of <code>[logs](#module_logs)</code>  
+**Kind**: static method of [<code>logs</code>](#module_logs)  
 **Summary**: Clear device logs history  
 **Returns**: <code>Promise</code> - - resolved witht he PubNub publish response  
 **Access**: public  
@@ -151,7 +151,7 @@ logs.historySinceLastClear
 <a name="module_logs.getLastClearTime"></a>
 
 ### logs.getLastClearTime(pubnubKeys, device) ⇒ <code>Promise.&lt;number&gt;</code>
-**Kind**: static method of <code>[logs](#module_logs)</code>  
+**Kind**: static method of [<code>logs</code>](#module_logs)  
 **Summary**: Get the most recent device logs history clear time  
 **Returns**: <code>Promise.&lt;number&gt;</code> - timetoken  
 **Access**: public  

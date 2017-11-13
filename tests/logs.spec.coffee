@@ -5,13 +5,14 @@ pubnub = require('../lib/pubnub')
 logs = require('../lib/logs')
 
 pubnubKeys = require('./config')
-{ randomId, randomChannel } = require('./helpers')
+{ randomId, randomChannel, getMessages } = require('./helpers')
 
 global.Promise ?= Promise
 
 describe 'Logs:', ->
 
-	@timeout(5000)
+	@timeout(10000)
+	@retries(5)
 
 	beforeEach ->
 		@instance = pubnub.getInstance(pubnubKeys)
@@ -23,144 +24,146 @@ describe 'Logs:', ->
 
 	describe '.subscribe()', ->
 
-		it 'should send message events', (done) ->
+		it 'should send message events', ->
 			pubnubStream = logs.subscribe(pubnubKeys, @device)
-			lines = []
-			pubnubStream.on 'line', (line) ->
-				lines.push(line)
 
-				if lines.length is 3
-					m.chai.expect(lines).to.deep.equal [
-						{
-							message: 'foo'
-							isSystem: false
-							timestamp: null
-						}
-						{
-							message: 'bar'
-							isSystem: false
-							timestamp: null
-						}
-						{
-							message: 'baz'
-							isSystem: false
-							timestamp: null
-						}
-					]
-					done()
-
-			Promise.mapSeries(['foo', 'bar', 'baz'], (m) =>
-				@instance.publish({
+			Promise.mapSeries ['foo', 'bar', 'baz'], (m) =>
+				@instance.publish
 					channel: @channel
-					message: m
-				})
-			).catch (err) ->
-				console.error('Error', err)
-				throw err
-
-			return
+					message: [
+						m: m
+						t: null
+						s: false
+					]
+			.thenReturn(getMessages(pubnubStream, 3))
+			.then (messages) ->
+				m.chai.expect(messages).to.deep.equal [
+					message: 'foo'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				,
+					message: 'bar'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				,
+					message: 'baz'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				]
 
 	describe '.history()', ->
 
-		beforeEach ->
-			return Promise.mapSeries(['Foo', 'Bar', 'Baz'], (m) =>
-				@instance.publish({
-					channel: @channel
-					message: m
-				})
-			).delay(500)
-			.catch (err) ->
-				console.error('Error', err)
-				throw err
-
 		it 'should eventually return the messages', ->
-			promise = logs.history(pubnubKeys, @device)
-			m.chai.expect(promise).to.eventually.become [
-				{
+			Promise.mapSeries ['Foo', 'Bar', 'Baz'], (m) =>
+				@instance.publish
+					channel: @channel
+					message: [
+						m: m
+						t: null
+						s: false
+					]
+			.delay(1000)
+			.then => logs.history(pubnubKeys, @device)
+			.then (messages) ->
+				m.chai.expect(messages).to.deep.equal [
 					message: 'Foo'
 					isSystem: false
 					timestamp: null
-				}
-				{
+					serviceId: null
+				,
 					message: 'Bar'
 					isSystem: false
 					timestamp: null
-				}
-				{
+					serviceId: null
+				,
 					message: 'Baz'
 					isSystem: false
 					timestamp: null
-				}
-			]
+					serviceId: null
+				]
 
-	describe '.clear() and historySinceLastClear()', ->
-
-		@timeout(10000)
-
-		beforeEach ->
-			@instance = pubnub.getInstance(pubnubKeys)
-			@device = {
-				uuid: randomId()
-				logs_channel: randomId()
-			}
-			@channel = getChannels(@device).channel
-
-		it 'should set the lower timestamp bound', ->
-			return Promise.mapSeries([1..3], (i) =>
-				@instance.publish({
+		it 'should ignore .clear', ->
+			Promise.mapSeries [1..3], (i) =>
+				@instance.publish
 					channel: @channel
-					message: "Message #{i}"
-				})
-			).delay(1000)
-			.catch (err) ->
-				console.error('Error', err)
-				throw err
-			.then =>
-				logs.history(pubnubKeys, @device)
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
+			.delay(1000)
+			.then => logs.clear(pubnubKeys, @device)
+			.delay(1000)
+			.then => logs.history(pubnubKeys, @device)
 			.then (messages) ->
-				# The original logs count
 				m.chai.expect(messages.length).to.equal(3)
-			.then =>
-				logs.clear(pubnubKeys, @device)
-				.delay(1000)
-			.then =>
-				logs.history(pubnubKeys, @device)
+
+	describe 'historySinceLastClear()', ->
+
+		it 'should show all messages, if .clear has never been called', ->
+			Promise.mapSeries [1..3], (i) =>
+				@instance.publish
+					channel: @channel
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
+			.delay(1000)
+			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
-				# The original logs count should not change
-				m.chai.expect(messages.length).to.equal(3)
+				m.chai.expect(messages).to.deep.equal [
+					message: 'Message 1'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				,
+					message: 'Message 2'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				,
+					message: 'Message 3'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				]
+
+		it 'should only show messages since the .clear(), if it has been called', ->
+			Promise.mapSeries [1..3], (i) =>
+				@instance.publish
+					channel: @channel
+					message: [
+						m: "Message #{i}"
+						t: null
+						s: false
+					]
+			.delay(1000)
+			.then => logs.clear(pubnubKeys, @device)
+			.delay(1000)
 			.then =>
-				logs.historySinceLastClear(pubnubKeys, @device)
-			.then (messages) ->
-				# The clear should have effect here
-				m.chai.expect(messages.length).to.equal(0)
-			.then =>
-				return Promise.mapSeries([4..5], (i) =>
-					@instance.publish({
+				Promise.mapSeries [4..5], (i) =>
+					@instance.publish
 						channel: @channel
-						message: "Message #{i}"
-					})
-				).delay(1000)
-				.catch (err) ->
-					console.error('Error', err)
-					throw err
-			.then =>
-				logs.history(pubnubKeys, @device)
+						message: [
+							m: "Message #{i}"
+							t: null
+							s: false
+						]
+			.delay(1000)
+			.then => logs.historySinceLastClear(pubnubKeys, @device)
 			.then (messages) ->
-				# The original logs count should not change
-				m.chai.expect(messages.length).to.equal(5)
-			.then =>
-				logs.historySinceLastClear(pubnubKeys, @device)
-			.then (messages) ->
-				# The clear should have effect here
-				m.chai.expect(messages).to.deep.equal([
-					{
-						message: 'Message 4'
-						isSystem: false
-						timestamp: null
-					}
-					{
-						message: 'Message 5'
-						isSystem: false
-						timestamp: null
-					}
-				])
+				m.chai.expect(messages).to.deep.equal [
+					message: 'Message 4'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				,
+					message: 'Message 5'
+					isSystem: false
+					timestamp: null
+					serviceId: null
+				]

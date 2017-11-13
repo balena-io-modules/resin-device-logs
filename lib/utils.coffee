@@ -69,20 +69,23 @@ exports.extractMessages = (message) ->
 			isSystem: /\[system\]/.test(message)
 			message: message
 			timestamp: null
+			serviceId: null
 		]
 
 	# Modern supervisor
 	# An array of objects with munged keys
 	else if isArray(message)
-		return message.map ({ m, t, s }) ->
+		return message.map ({ m, t, s, c }) ->
 			message: m
 			timestamp: t
 			# Make sure it's bool (can be `1`)
 			isSystem: Boolean(s)
+			serviceId: c ? null
 
 	# Legacy supervisor
 	else
 		return [ assign({
 			isSystem: false
 			timestamp: null
+			serviceId: null
 		}, message) ]

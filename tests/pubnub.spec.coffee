@@ -11,7 +11,8 @@ global.Promise or= Promise
 
 describe 'PubNub:', ->
 
-	@timeout(5000)
+	@timeout(10000)
+	@retries(5)
 
 	describe '.getInstance()', ->
 
@@ -37,24 +38,20 @@ describe 'PubNub:', ->
 			@instance = pubnub.getInstance(pubnubKeys)
 			@channel = randomChannel()
 
-			return Promise.mapSeries([1..5], (i) =>
-				@instance.publish({
+			Promise.mapSeries [1..5], (i) =>
+				@instance.publish
 					channel: @channel
 					message: "Message #{i}"
-				})
-			).delay(1000)
-			.catch (err) ->
-				console.error('Error', err)
-				throw err
+			.delay(1000)
 
 		it 'should retrieve the history messages', ->
 			promise = pubnub.history(@instance, @channel)
-			m.chai.expect(promise).to.eventually.become([
+			m.chai.expect(promise).to.eventually.become [
 				'Message 1', 'Message 2', 'Message 3', 'Message 4', 'Message 5'
-			])
+			]
 
 		it 'should retrieve the history messages and support extra options', ->
 			promise = pubnub.history(@instance, @channel, count: 2)
-			m.chai.expect(promise).to.eventually.become([
+			m.chai.expect(promise).to.eventually.become [
 				'Message 4', 'Message 5'
-			])
+			]
